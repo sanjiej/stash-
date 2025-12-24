@@ -1,1 +1,13 @@
-Weather modules directory
+# ⚡ Proxy Modules — 黑金旗舰主题
+
+此目录用于存放所有代理核心模块，例如自动分组、策略生成等。
+
+## 📦 内容结构
+- `auto-group.module` — 自动分组模块
+- 未来可加入更多核心代理模块
+
+## 🎯 设计理念
+- 金色代表核心、权威、旗舰
+- 结构稳定、可扩展性强
+- 与 scripts/proxy 下脚本配套
+
