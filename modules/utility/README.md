@@ -1,1 +1,13 @@
-Weather modules directory
+# 🛠 Utility Modules — 霓虹紫主题
+
+此目录用于存放工具类模块，例如重写、增强功能等。
+
+## 📦 内容结构
+- `rewrite.module` — 重写模块
+- 其他工具模块可按需添加
+
+## 🎯 设计理念
+- 霓虹紫代表辅助与增强
+- 轻量、灵活、可扩展
+- 与 scripts/utility 下脚本对应
+
