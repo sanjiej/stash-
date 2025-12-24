@@ -1,5 +1,5 @@
 const params = getParams($argument);
-const cityId = params.cityId || "101190401";
+const cityId = params.cityId || "101110101";
 const apiUrl = `http://t.weather.sojson.com/api/weather/city/${cityId}`;
 
 $httpClient.get(apiUrl, (error, response, data) => {
