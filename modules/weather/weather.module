@@ -15,7 +15,7 @@ tiles:
 
 script-providers:
   tianqi:
-    url: scripts/weather/scripts/weather/tianqi.js
+    url: https://github.com/sanjiej/stash-/blob/main/scripts/weather/scripts/weather/tianqi.js
     interval: 600
     timeout: 10
 
