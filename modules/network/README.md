@@ -1,1 +1,14 @@
-Weather modules directory
+# 🛰 Network Modules — 霓虹青主题
+
+此目录用于存放所有网络工具类模块，例如延迟测试、测速等。
+
+## 📦 内容结构
+- `latency.module` — 延迟测试模块
+- 更多网络工具可按需扩展
+
+## 🎯 设计理念
+- 霓虹青代表网络流动感
+- 模块与 scripts/network 下脚本对应
+- 结构清晰，便于维护
+
+
