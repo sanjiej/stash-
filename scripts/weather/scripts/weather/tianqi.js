@@ -1,161 +1,43 @@
-// tianqi.js - 和风天气 QWeather 旗舰版
-// Author: Shaw
+const params = getParams($argument);
+const cityId = params.cityId || "101110101";
+const apiUrl = `http://t.weather.sojson.com/api/weather/city/${cityId}`;
 
-// ============== 配置 ==============
-const CONFIG = {
-  key: "2f61bae9c41b44c39189fdc9ca88cdec",          // 在这里填你的和风天气 API Key
-  base: "https://devapi.qweather.com/v7",
-  defaultLocation: "101110101",        // 默认：台北，可改成你常驻城市 ID
-  timeout: 8000
-};
+$httpClient.get(apiUrl, (error, response, data) => {
+  if (error) {
+    console.log(error);
+    $done();
+    return;
+  }
 
-// ============== 工具函数 ==============
-function parseArgs() {
-  if (!$argument) return {};
+  const weatherData = JSON.parse(data);
+  if (weatherData.status !== 200) {
+    console.log(`请求失败，状态码：${weatherData.status}`);
+    $done();
+    return;
+  }
+
+  const cityInfo = weatherData.cityInfo;
+  const currentWeather = weatherData.data.forecast[0];
+    const message = `📍城市：${cityInfo.city}\n🕰︎更新时间：${cityInfo.updateTime} \n🌤︎天气：${currentWeather.type}\n🌡︎温度：${currentWeather.low}  ${currentWeather.high}\n💧湿度：${weatherData.data.shidu}\n💨空气质量：${weatherData.data.quality}\n☁️PM2.5：${weatherData.data.pm25}\n☁️PM10：${weatherData.data.pm10}\n🪁风向：${currentWeather.fx}\n🌪️风力：${currentWeather.fl}\n🌅日出时间：${currentWeather.sunrise}\n🌇日落时间：${currentWeather.sunset}\n🏷︎Tips：${currentWeather.notice}`;
+
+  const body = {
+    title: "今日天气",
+    content: message,
+    cityId:params.cityId,
+    icon: params.icon,
+    "icon-color": params.color
+  };
+  $done(body);
+});
+
+function getParams(param) {
   return Object.fromEntries(
-    $argument.split("&").map(i => i.split("=").map(decodeURIComponent))
+    param
+      .split("&")
+      .map((item) => item.split("="))
+      .map(([k, v]) => [k, decodeURIComponent(v)])
   );
 }
-
-function httpGet(url, cb) {
-  $httpClient.get({ url, timeout: CONFIG.timeout }, (err, resp, data) => {
-    if (err) return cb(err);
-    if (!resp || resp.status !== 200) return cb(new Error("HTTP " + (resp && resp.status)));
-    cb(null, data);
-  });
-}
-
-function safeJson(data) {
-  try { return JSON.parse(data); } catch (e) { return null; }
-}
-
-function isValidQW(res) {
-  return res && res.code === "200";
-}
-
-function formatAQI(aqi) {
-  if (!aqi) return "";
-  const n = Number(aqi);
-  if (isNaN(n)) return `AQI ${aqi}`;
-  let level = "";
-  if (n <= 50) level = "优";
-  else if (n <= 100) level = "良";
-  else if (n <= 150) level = "轻度污染";
-  else if (n <= 200) level = "中度污染";
-  else if (n <= 300) level = "重度污染";
-  else level = "严重污染";
-  return `AQI ${n} · ${level}`;
-}
-
-function weatherIcon(text) {
-  if (!text) return "";
-  if (text.includes("雨")) return "🌧";
-  if (text.includes("雪")) return "❄️";
-  if (text.includes("雷")) return "⛈";
-  if (text.includes("云") || text.includes("阴")) return "☁️";
-  if (text.includes("雾") || text.includes("霾")) return "🌫";
-  return "☀️";
-}
-
-// ============== 主逻辑 ==============
-function main() {
-  const args = parseArgs();
-  const loc = args.cityId || CONFIG.defaultLocation;
-
-  const nowUrl = `${CONFIG.base}/weather/now?key=${CONFIG.key}&location=${encodeURIComponent(loc)}`;
-  const airUrl = `${CONFIG.base}/air/now?key=${CONFIG.key}&location=${encodeURIComponent(loc)}`;
-
-  // 并行拉实况天气 + 空气质量
-  let nowData = null;
-  let airData = null;
-  let doneCount = 0;
-  let hasError = false;
-
-  function checkDone() {
-    if (doneCount < 2) return;
-    if (!nowData) {
-      return doneError("天气实况数据无效");
-    }
-    render(nowData, airData);
-  }
-
-  httpGet(nowUrl, (err, data) => {
-    doneCount++;
-    if (err) {
-      hasError = true;
-      return doneError("天气请求失败");
-    }
-    const json = safeJson(data);
-    if (!isValidQW(json)) {
-      hasError = true;
-      return doneError("天气接口返回异常");
-    }
-    nowData = json;
-    if (!hasError) checkDone();
-  });
-
-  httpGet(airUrl, (err, data) => {
-    doneCount++;
-    if (err) return checkDone(); // 空气质量失败不致命
-    const json = safeJson(data);
-    if (!json || (json.code !== "200" && json.code !== "204")) return checkDone();
-    airData = json;
-    checkDone();
-  });
-}
-
-// ============== 渲染输出 ==============
-function render(nowRes, airRes) {
-  const now = nowRes.now || {};
-  const temp = now.temp || "--";
-  const text = now.text || "未知天气";
-  const feelsLike = now.feelsLike || "";
-  const humidity = now.humidity || "";
-  const windDir = now.windDir || "";
-  const windScale = now.windScale || "";
-  const icon = weatherIcon(text);
-
-  // 城市名要额外调 city/lookup，这里避免多一次请求，直接用 location 代称
-  const title = `${icon} ${temp}°C · ${text}`;
-  const subParts = [];
-  if (feelsLike) subParts.push(`体感 ${feelsLike}°C`);
-  if (humidity) subParts.push(`湿度 ${humidity}%`);
-  if (windDir || windScale) subParts.push(`${windDir}${windScale}级`);
-  const subtitle = subParts.join(" · ");
-
-  const detailLines = [];
-
-  // 空气质量
-  if (airRes && Array.isArray(airRes.now ? [airRes.now] : []) && airRes.now) {
-    const a = airRes.now;
-    const aqiText = formatAQI(a.aqi);
-    if (aqiText) detailLines.push(aqiText);
-    if (a.category) detailLines.push(`空气：${a.category}`);
-  }
-
-  // 其他信息
-  if (now.obsTime) detailLines.push(`观测时间：${now.obsTime}`);
-
-  const content = detailLines.join("\n");
-
-  $done({
-    title,
-    subtitle,
-    content
-  });
-}
-
-// ============== 错误输出 ==============
-function doneError(msg) {
-  $done({
-    title: "天气获取失败",
-    subtitle: msg || "未知错误",
-    content: "请检查网络、API Key 或 location 参数"
-  });
-}
-
-// 入口
-main();
 
 
 
