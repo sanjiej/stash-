@@ -1,1 +1,8 @@
-Weather modules directory
+# 📸 Screenshots — 深色背景展示区
+
+此目录用于存放模块截图、示例展示等。
+
+## 🎯 建议
+- 使用深色背景
+- 保持黑金 / 霓虹视觉一致性
+
